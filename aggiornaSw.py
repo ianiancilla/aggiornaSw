@@ -50,7 +50,6 @@ helpText = """
 
 import sys, os, shutil, time
 
-
 #save input to command array
 command = sys.argv
 
@@ -81,10 +80,10 @@ def main (command):
 						else:
 							nonValido()
 					
-					else: #TROVA semplice
+					else: 	#TROVA semplice
 						listaFile = trovaFile(command[3], command[1])
 						if listaFile == []:
-							print("Non ci sono file con questo nome, ricontrolla.")
+							print("\nNon ci sono file con questo nome, ricontrolla.\n")
 							return
 						listaDate = aggiungiDate(listaFile)
 
@@ -96,33 +95,72 @@ def main (command):
 						elif len(command) == 6 and command[4].lower() == "log":
 						#>>aggiornaSw <cartella> trova <nome file> log <path per il log>
 						#percorre <cartella> e tutte le sue subdirectories e crea un file nella cartella <path per il log> con una lista di tutti i path in cui quel file appare, con data di creazione e di ultima modifica
-							if os.path.isfile(command[5]):
-								confermaSovrascrivi = "Il file",command[5],"esiste già. Vuoi sovrascriverlo? y/n"
-								if input(confermaSovrascrivi).lower() == "y":
-									log = open(command[5], "w")
-									log.write(bellaListaConDate(listaDate, 300))
-									log.close()
-									print(bellaListaConDate(listaDate, 80))
-									print("\nPuoi trovare il log qui:", command[5])
-							else:
-								log = open(command[5], "w")
-								log.write(bellaListaConDate(listaDate, 300))
-								log.close()
-								print(bellaListaConDate(listaDate, 80))
-								print("\nPuoi trovare il log qui:", command[5])
+							saveLog(command[5], listaDate)
 						else:
 							nonValido()
 
+				elif command[2].lower() == "sostituisci":	#funzioni SOSTITUISCI
+					if os.path.isfile(command[4]):
+						#>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire>
+						#percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file trovato a <path file con cui sostituire>. Stampa una lista dei cambi effettuati.
+						listaFile = trovaFile(command[3], command[1])
+						if listaFile == []:
+							print("\nNon ci sono file con questo nome, ricontrolla.\n")
+							return
+						listaConDate = aggiungiDate(listaFile)
+
+						if len(command) == 5: #SOSTITUISCI semplice
+							#>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire>
+							#percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file trovato a <path file con cui sostituire>. Stampa una lista dei cambi effettuati.
+							listaSostituzioni = "\nI file che saranno sostituiti con " + command[4] + " sono i seguenti:\n" + bellaListaConDate(listaConDate, 80) + "\n"
+							print(listaSostituzioni)
+							if input("Vuoi procedere? y/n ").lower() == "y":
+								print("\nInizio sostituzione...")
+								listaSostituzioniFatte = (sostituisci(listaFile, command[4])) #non crea solo lista SOSTITUISCE I FILE
+								ListaSostFatteDate = aggiungiDate(listaSostituzioniFatte)
+								print("\nOperazione effettuata. Sostituzioni effetuate:")
+								print(bellaListaConDate(ListaSostFatteDate, 80)+"\n")
+							else:
+								print("\nOperazione annullata.\n")
+						
+						elif len(command) == 7 and command[5].lower() == "log": #SOSTITUISCI semplice con log
+							# >>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> log <path per il log>
+							#percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file nella cartella <path per il log> trovato a <path file con cui sostituire>. Genera un file con una lista dei cambi effettuati.
+
+							listaSostituzioni = "\nI file che saranno sostituiti con " + command[4] + " sono i seguenti:\n" + bellaListaConDate(listaConDate, 80) + "\ne un log sarà salvato qui: " + command[6]
+							print(listaSostituzioni)
+							if input("Vuoi procedere? y/n ").lower() == "y":
+								print("\nInizio sostituzione...")
+								listaSostituzioniFatte = (sostituisci(listaFile, command[4])) #non crea solo lista SOSTITUISCE I FILE
+								ListaSostFatteDate = aggiungiDate(listaSostituzioniFatte)
+								print("\nOperazione effettuata. Sostituzioni effetuate:")
+								print(bellaListaConDate(ListaSostFatteDate, 80) + "\n")
+								saveLog(command[6], ListaSostFatteDate)
+							else:
+								print("\nOperazione annullata.\n")
+							
+
+
+
+					else: #se il file con cui sostituire non esiste
+						nonValido()
+				
+
 
 				
-				
-				elif command[2].lower() == "sostituisci":	#funzioni SOSTITUISCI
-					#TODO
-					pass
+
+				#>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> update <cartellaUpdate>
+				#effettua tutte le azioni di "sostituisci" ma per ogni istanza di sostituzione di <nome file da sostituire>, ricrea lo stesso path all'interno di <cartellaUpdate>, e in quel path aggiunge <path file con cui sostituire>
+
+				#>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> log <path per il log> update <cartellaUpdate>
+				#effettua tutte le azioni di "sostituisci log", ma per ogni istanza di sostituzione di <nome file da sostituire>, ricrea lo stesso path all'interno di <cartellaUpdate>, e in quel path aggiunge <path file con cui sostituire>
+
 			else:
 				nonValido()
-	except IndexError:
-		nonValido()	
+	#except IndexError:
+	#	nonValido()	
+	except NameError:
+		pass
 
 #___HELPER FUNCTIONS___ 
 
@@ -204,7 +242,7 @@ def bellaListaConDate (listaConDate, caratteri):	#list of tuple >> string
 	prende una lista di tuples come ritornata da aggiungiDate, e ritorna una stringa formattata in maniera leggibile, con righe di lunghezza <caratteri>
 	"""
 	prettyString = ""
-	firstLine = "=== CREATO =="+"= MODIFICATO ="+"== NOME FILE "
+	firstLine = "\n=== CREATO =="+"= MODIFICATO ="+"== NOME FILE "
 	firstLine = firstLine.ljust(caratteri,"=")
 
 	prettyString += firstLine
@@ -216,8 +254,26 @@ def bellaListaConDate (listaConDate, caratteri):	#list of tuple >> string
 		fileName = tup[0]
 		prettyLine += "\n "+ dataCreato + "."*4 + dataModificato + "."*5 + fileName
 		prettyString+= prettyLine
+	prettyString+= "\n"
 	return prettyString
 
+def saveLog (logFile, listaConDate):
+	if os.path.isfile(logFile):
+		confermaSovrascrivi = "Il file " + logFile + " esiste già. Vuoi sovrascriverlo? y/n "
+		if input(confermaSovrascrivi).lower() == "y":
+			log = open(logFile, "w")
+			log.write(bellaListaConDate(listaConDate, 120))
+			log.close()
+			print(bellaListaConDate(listaConDate, 80))
+			print("\nPuoi trovare il log qui:", logFile)
+		else:
+			print("Operazione annullata.")
+	else:
+		log = open(logFile, "w")
+		log.write(bellaListaConDate(listaConDate, 120))
+		log.close()
+		print(bellaListaConDate(listaConDate, 80))
+		print("\nPuoi trovare il log qui:", logFile)
 
 #__TESTING AREA__#
 
