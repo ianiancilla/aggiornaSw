@@ -1,3 +1,7 @@
+#TODO
+#aggiungere numero istanze trovate
+
+
 helpText = """
 	aggiornaSw -- uno script che permette di gestire l'aggiornamento di file all'interno di una cartella con molte sottocartelle
 
@@ -210,20 +214,6 @@ def sostituisci (listaFile, fileNuovo):	#list, string >> list
 		listaCambiamenti.append(fileName)
 	
 	return listaCambiamenti
-
-"""	
-def trovaSubdirVuote (mydir):	#string >> list 
-	\"""
-	trova le subdirectory vuote, returns lista
-	mydir: absolute path di directory
-	\"""
-	dirList = []
-	for root, dirs, files in os.walk(mydir):
-		for dir in dirs:
-			if :
-				dirList.append(os.path.join(root, dir))
-	return dirList
-"""
 	
 def nonValido (): # >> string
 	"""
@@ -255,6 +245,8 @@ def bellaListaConDate (listaConDate, caratteri):	#list of tuple >> string
 		prettyLine += "\n "+ dataCreato + "."*4 + dataModificato + "."*5 + fileName
 		prettyString+= prettyLine
 	prettyString+= "\n"
+	occurrenceNumber = len(listaConDate)
+	prettyString += "Numero di file: " + str(occurrenceNumber) + "\n"
 	return prettyString
 
 def saveLog (logFile, listaConDate):
@@ -274,6 +266,22 @@ def saveLog (logFile, listaConDate):
 		log.close()
 		print(bellaListaConDate(listaConDate, 80))
 		print("\nPuoi trovare il log qui:", logFile)
+
+def makeUpdate (listaFile, myDir, newDir):	#list, str, str > list
+	""" return: lista dei file copiati (con percorso)
+	prende una lista di file con origine del proprio tree in myDir, e li copia con la stessa struttura in newDir
+	listaFile: lista di percorsi di file, come ritornata da TROVA
+	myDir: directory da cui effettuare la copia
+	newDir: directory in cui effettuare la copia
+	"""
+	listaCopiati = []
+	for filePath in listaFile:
+		dirName = os.path.split(filePath)[0]
+		newPath = dirName.replace(myDir, newDir)
+		os.makedirs(newPath, exist_ok=True)
+		listaCopiati.append(shutil.copy(filePath, newPath))
+	return listaCopiati
+
 
 #__TESTING AREA__#
 
