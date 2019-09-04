@@ -16,39 +16,10 @@ helpText = """
 		
 	>>aggiornaSw <cartella> trova <nome file> log <path per il log>
 		percorre <cartella> e tutte le sue subdirectories e crea un file nella cartella <path per il log> con una lista di tutti i path in cui quel file appare, con data di creazione e di ultima modifica
-
-
-	>>aggiornaSw <cartella> trova mod|creato il <data>
-		percorre <cartella> e tutte le sue subdirectories e stampa una lista di tutti i path di file modificati|creati nella data specificata
-
-	>>aggiornaSw <cartella> trova mod|creato il <data> log <path per il log>
-		percorre <cartella> e tutte le sue subdirectories e crea un file nella cartella <path per il log> con una lista di tutti i path di file modificati|creati nella data specificata
-
-
-	>>aggiornaSw <cartella> trova mod|creato prima|dopo <data>
-		percorre <cartella> e tutte le sue subdirectories e stampa una lista di tutti i path di file modificati|creati prima|dopo la data specificata (inclusa)
-
-	>>aggiornaSw <cartella> trova mod|creato prima|dopo <data> log <path per il log>
-		percorre <cartella> e tutte le sue subdirectories e crea un file nella cartella <path per il log> con una lista di tutti i path di file modificati|creati prima|dopo la data specificata (inclusa)
-
 		
 	>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire>
 		percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file trovato a <path file con cui sostituire>. Stampa una lista dei cambi effettuati.
-
-	>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> log <path per il log>
-		percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file nella cartella <path per il log> trovato a <path file con cui sostituire>. Genera un file con una lista dei cambi effettuati.
-
-
-	>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> update <cartellaUpdate>
-	>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> log <path per il log> update <cartellaUpdate>
-		effettua tutte le azioni di "sostituisci" o "sostituisci log", ma per ogni istanza di sostituzione di <nome file da sostituire>, ricrea lo stesso path all'interno di <cartellaUpdate>, e in quel path aggiunge <path file con cui sostituire>
-
-
-	>>aggiornaSw <cartella> trovaVuote
-		percorre <cartella> e tutte le sue subdirectories e stampa una lista di tutte le directories vuote
-		
-	>>aggiornaSw <cartella> trovaVuote log <path per il log>
-		percorre <cartella> e tutte le sue subdirectories e crea un file nella cartella <path per il log> con una lista di tutte le directories vuote
+		TI VERRÀ CHIESTO SE SALVARE UN LOG E SE CREARE UNA CARTELLA DI UPDATE
 
 	"""
 
@@ -113,37 +84,41 @@ def main (command):
 							return
 						listaConDate = aggiungiDate(listaFile)
 
-						if len(command) == 5: #SOSTITUISCI semplice
-							#>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire>
-							#percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file trovato a <path file con cui sostituire>. Stampa una lista dei cambi effettuati.
-							listaSostituzioni = "\nI file che saranno sostituiti con " + command[4] + " sono i seguenti:\n" + bellaListaConDate(listaConDate, 80) + "\n"
-							print(listaSostituzioni)
-							if input("Vuoi procedere? y/n ").lower() == "y":
-								print("\nInizio sostituzione...")
-								listaSostituzioniFatte = (sostituisci(listaFile, command[4])) #non crea solo lista SOSTITUISCE I FILE
-								ListaSostFatteDate = aggiungiDate(listaSostituzioniFatte)
-								print("\nOperazione effettuata. Sostituzioni effetuate:")
-								print(bellaListaConDate(ListaSostFatteDate, 80)+"\n")
-							else:
-								print("\nOperazione annullata.\n")
-						
-						elif len(command) == 7 and command[5].lower() == "log": #SOSTITUISCI semplice con log
-							# >>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire> log <path per il log>
-							#percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file nella cartella <path per il log> trovato a <path file con cui sostituire>. Genera un file con una lista dei cambi effettuati.
+						#>>aggiornaSw <cartella> sostituisci <nome file da sostituire> <path file con cui sostituire>
+						#percorre <cartella> e tutte le sue subdirectories, e sostituisce ogni istanza di <nome file da sostituire> con il file trovato a <path file con cui sostituire>. Stampa una lista dei cambi effettuati.
+						listaSostituzioni = "\nI file che saranno sostituiti con " + command[4] + " sono i seguenti:\n" + bellaListaConDate(listaConDate, 80) + "\n"
+						print(listaSostituzioni)
+						if input("\nVuoi procedere? y/n ").lower() == "y":
+							if input("\nVuoi salvare un log delle operazioni? y/n ").lower() == "y":
+								log = True									
+								logPath = input("Scrivi il path (incluso il nome del file) dove vuoi che crei il log: ")
+							if input("\nVuoi anche creare una cartella con gli update? y/n ").lower() == "y":
+								update = True
+								updatePath = input("Scrivi il path della cartella dove vuoi che crei la cartella update: ")
+								if input("\nVuoi salvare un log dell'update (sarà salvato nella cartella dell'update)? y/n ").lower() == "y":
+								 updateLog = True									
+								
+							print("\nInizio sostituzione...")
+							listaSostituzioniFatte = (sostituisci(listaFile, command[4])) #non crea solo lista SOSTITUISCE I FILE
+							ListaSostFatteDate = aggiungiDate(listaSostituzioniFatte)
+							print("\nOperazione effettuata. Sostituzioni effetuate:")
+							print(bellaListaConDate(ListaSostFatteDate, 80)+"\n")								
+							if log:
+								saveLog(logPath, ListaSostFatteDate)
+							if update:
+								print("\nInizio a creare la cartella Update in " + updatePath)
+								pathUpdate, listaUpdated = makeUpdate(listaSostituzioniFatte, command[1], updatePath)
+								print("\nCartella Update creata.")
+								if updateLog:
+									listaUpdatedDate = aggiungiDate(listaUpdated)
+									updateLogPath = os.path.join(pathUpdate, "update-log.txt")
+									saveLog(updateLogPath, listaUpdatedDate)
 
-							listaSostituzioni = "\nI file che saranno sostituiti con " + command[4] + " sono i seguenti:\n" + bellaListaConDate(listaConDate, 80) + "\ne un log sarà salvato qui: " + command[6]
-							print(listaSostituzioni)
-							if input("Vuoi procedere? y/n ").lower() == "y":
-								print("\nInizio sostituzione...")
-								listaSostituzioniFatte = (sostituisci(listaFile, command[4])) #non crea solo lista SOSTITUISCE I FILE
-								ListaSostFatteDate = aggiungiDate(listaSostituzioniFatte)
-								print("\nOperazione effettuata. Sostituzioni effetuate:")
-								print(bellaListaConDate(ListaSostFatteDate, 80) + "\n")
-								saveLog(command[6], ListaSostFatteDate)
-							else:
-								print("\nOperazione annullata.\n")
-							
+									
 
+						else:
+							print("\nOperazione annullata.\n")
+							return
 
 
 					else: #se il file con cui sostituire non esiste
@@ -161,10 +136,8 @@ def main (command):
 
 			else:
 				nonValido()
-	#except IndexError:
-	#	nonValido()	
-	except NameError:
-		pass
+	except IndexError:
+		nonValido()	
 
 #___HELPER FUNCTIONS___ 
 
@@ -180,7 +153,7 @@ def trovaFile (myfile, mydir):	#string, string >> list
 	fileList = []
 	for root, dirs, files in os.walk(mydir):
 		for fileName in files:
-			if fileName == myfile:
+			if fileName.lower() == myfile.lower():
 				fileList.append(os.path.join(root, fileName))
 	return fileList
 
@@ -251,7 +224,7 @@ def bellaListaConDate (listaConDate, caratteri):	#list of tuple >> string
 
 def saveLog (logFile, listaConDate):
 	if os.path.isfile(logFile):
-		confermaSovrascrivi = "Il file " + logFile + " esiste già. Vuoi sovrascriverlo? y/n "
+		confermaSovrascrivi = "Il file che hai scelto per il log " + logFile + " esiste già. Vuoi sovrascriverlo? y/n "
 		if input(confermaSovrascrivi).lower() == "y":
 			log = open(logFile, "w")
 			log.write(bellaListaConDate(listaConDate, 120))
@@ -267,8 +240,8 @@ def saveLog (logFile, listaConDate):
 		print(bellaListaConDate(listaConDate, 80))
 		print("\nPuoi trovare il log qui:", logFile)
 
-def makeUpdate (listaFile, myDir, newDir):	#list, str, str > list
-	""" return: lista dei file copiati (con percorso)
+def makeUpdate (listaFile, myDir, newDir):	#list, str, str > (str, list)
+	""" return: tuple of: directory with the update ,lista dei file copiati (con percorso)
 	prende una lista di file con origine del proprio tree in myDir, e li copia con la stessa struttura in newDir
 	listaFile: lista di percorsi di file, come ritornata da TROVA
 	myDir: directory da cui effettuare la copia
@@ -276,11 +249,12 @@ def makeUpdate (listaFile, myDir, newDir):	#list, str, str > list
 	"""
 	listaCopiati = []
 	for filePath in listaFile:
-		dirName = os.path.split(filePath)[0]
-		newPath = dirName.replace(myDir, newDir)
+		dirName = os.path.dirname(filePath)
+		relPath = os.path.relpath(dirName, myDir)
+		newPath = os.path.join(newDir,"update",relPath)
 		os.makedirs(newPath, exist_ok=True)
 		listaCopiati.append(shutil.copy(filePath, newPath))
-	return listaCopiati
+	return (newPath, listaCopiati)
 
 
 #__TESTING AREA__#
