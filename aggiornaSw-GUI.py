@@ -6,7 +6,7 @@ import sys, os, shutil, time
 # DEFINE LAYOUT
 col_1 = [
             [sg.Text('Scegli la cartella dove vuoi effettuare la ricerca:')],
-            [sg.InputText(), sg.FolderBrowse("Sfoglia", key="folder-search")],
+            [sg.InputText(), sg.FolderBrowse("Sfoglia", key="folder-to-search")],
             [sg.Text("\nScrivi il nome del file da cercare, inclusa l'estensione:")],
             [sg.InputText(key= "file-old")],
             [sg.Text("\nDecidi cosa vuoi fare:")],
@@ -17,12 +17,12 @@ col_1 = [
             [sg.Text("\nSe hai scelto Sostituisci o Sostituisci/Update")],
             [sg.Text("Seleziona il file con cui sostuire il file che hai specificato:")],
             [sg.InputText(), sg.FileBrowse("Sfoglia", key="file-new")],
-            [sg.Text("\nSe hai scelto Sostituisci/ e crea cartella Update")],
+            [sg.Text("\nSe hai scelto Sostituisci e crea cartella Update")],
             [sg.Text("Seleziona la cartella dove creare l'update:")],
             [sg.InputText(), sg.FolderBrowse("Sfoglia", key="folder-update")],
             [sg.Text("\n")],
 
-            [sg.Button("ANTEPRIMA"), sg.Button("ESEGUI"), sg.Exit("ANNULLA")] 
+            [sg.Button("ANTEPRIMA"), sg.Button("ESEGUI"), sg.Exit("ESCI")] 
 ]
 
 col_2 = [
@@ -41,16 +41,66 @@ window = sg.Window('Aggiorna Software GUI', layout)
 event, values = window.Read()  
 
 
-# ---===--- Loop taking in user input and using it to call scripts --- #      
-while True:      
-    event, values = window.Read()      
-    if event is None or event == 'ANNULLA':      
-        break      
-    main()    
-
-window.Close()
-
 # MAIN FUNCTION
+def main(event, values):
+    """
+    the main loop of the program, calling all other functions
+    event, values as given by PySimpleGUI
+    """
+    log_width = 100
+    print_width = 70
+
+    # if user only wants a preview
+    if event == "ANTEPRIMA":
+        try:
+            #print("Event è: ", event)
+            #print("Values è: ", values)
+
+            # if user only wants to find files
+            if values["action"] == "Trova e basta":
+                file_path_list = find_file(values["file-old"], values["folder-to-search"])
+                dated_list = add_dates(file_path_list)
+                description = "Ho trovato le seguenti istanze del file " + values["file-old"] + " nella cartella " +  values["folder-to-search"] + ":\n"
+                print(format_dated_list(dated_list, print_width, description))
+                
+                # in case a log is requested
+                if values["folder-log"]:
+                    log_file_path = os.path.join( values["folder-log"], "log-trova.txt")
+                    save_log(log_file_path, dated_list, description)
+
+            # if user asked a preview of a file replacement    
+            elif values["action"] == "Trova e sostituisci":
+                file_path_list = find_file(values["file-old"], values["folder-to-search"])
+                dated_list = add_dates(file_path_list)
+                description = "Le seguenti istanze del file " + values["file-old"] + " nella cartella " +  values["folder-to-search"] + " verrebbero sostituite con il file " + values["file-new"] + ":\n"
+                print(format_dated_list(dated_list, print_width, description))
+
+
+            elif values["action"] == "Trova, Sostituisci, e crea folder Update":
+                pass
+                
+            
+            #what to do if required data was not given
+        except NameError as problema:
+            nonValid()
+            print(problema)
+
+           
+    elif event == "ESEGUI":
+        try:
+            if values[action] == "Trova e basta":
+                pass
+            elif values[action] == "Trova e sostituisci":
+                pass
+            elif values[action] == "Trova, Sostituisci, e crea folder Update":
+                pass
+                
+            
+            #what to do if required data was not given
+        except NameError as problema:
+            nonValid()
+            print(problema)
+
 
 
 # HELPER FUNCTIONS
@@ -111,7 +161,8 @@ def nonValid(): # >> string
     """
     warning= """
     **************
-    Stai cercando di usare il programma in maniera non corretta. Ricontrolla bene di aver inserito tutto in maniera corretta.
+    Stai cercando di usare il programma in maniera non corretta.
+    Ricontrolla bene di aver inserito tutti i dati necessari, e in maniera corretta.
     **************\n
     """
     print(warning)
@@ -123,16 +174,16 @@ def parse_time(date_epoch):	#number (date in seconds from epoch) >> string (date
     """
     return time.strftime("%Y/%m/%d", time.localtime(date_epoch))
 
-def format_dated_list(dated_list, char_number):	#list of tuple, int >> string
+def format_dated_list(dated_list, char_number, description):	#list of tuple, int, string >> string
     """
     returns: a string version of the list of tuples, formatted in a legible way, with lines of length "char_number
-    takes: a list of tuples (as output by add_dates), a number of characters for width size
+    takes: a list of tuples (as output by add_dates), a number of characters for width size, a string with the description of the list contents
     """
-    formatted_string = ""
-    first_line = "\n=== CREATO =="+"= MODIFICATO ="+"== NOME FILE "
-    first_line = first_line.ljust(char_number,"=")
+    formatted_string = description
+    head_line = "\n=== CREATO =="+"= MODIFICATO ="+"== NOME FILE "
+    head_line = head_line.ljust(char_number,"=")
 
-    formatted_string += first_line
+    formatted_string += head_line + "\n"
 
     for tup in dated_list:
         formatted_line = ""
@@ -143,25 +194,23 @@ def format_dated_list(dated_list, char_number):	#list of tuple, int >> string
         formatted_string+= formatted_line
     formatted_string+= "\n"
     occurrence_num = len(dated_list)
-    formatted_string += "Numero di file: " + str(occurrence_num) + "\n"
+    formatted_string += "\nNumero di file: " + str(occurrence_num) + "\n"
     return formatted_string
 
-def save_log(log_file_path, dated_list):
+def save_log(log_file_path, dated_list, description):
     if os.path.isfile(log_file_path):
         overwrite_confirm = "Il file che hai scelto per il log " + log_file_path + " esiste già. Vuoi sovrascriverlo? y/n "
         if input(overwrite_confirm).lower() == "y":
             log = open(log_file_path, "w")
-            log.write(format_dated_list(dated_list, 120))
+            log.write(format_dated_list(dated_list, 120, description))
             log.close()
-            print(format_dated_list(dated_list, 80))
             print("\nPuoi trovare il log qui:", log_file_path)
         else:
             print("Operazione annullata.")
     else:
         log = open(log_file_path, "w")
-        log.write(format_dated_list(dated_list, 120))
+        log.write(format_dated_list(dated_list, 120, description))
         log.close()
-        print(format_dated_list(dated_list, 80))
         print("\nPuoi trovare il log qui:", log_file_path)
 
 def makeUpdate (file_path_list, origin_dir_path, new_dir_path):	#list of str, str, str > (str, list of str)
@@ -181,3 +230,13 @@ def makeUpdate (file_path_list, origin_dir_path, new_dir_path):	#list of str, st
         os.makedirs(new_dir_path, exist_ok=True)
         copied_path_list.append(shutil.copy(file_path, new_dir_path))
     return (new_dir_path, copied_path_list)
+
+
+# ---===--- Loop taking in user input and using it to call scripts --- #      
+while True:      
+    event, values = window.Read()      
+    if event is None or event == 'ESCI':      
+        break      
+    main(event, values)    
+
+window.Close()
