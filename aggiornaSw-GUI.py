@@ -199,7 +199,12 @@ def format_dated_list(dated_list, char_number, description):	#list of tuple, int
 
 def save_log(log_file_path, dated_list, description):
     if os.path.isfile(log_file_path):
-        overwrite_confirm = "Il file che hai scelto per il log " + log_file_path + " esiste già. Vuoi sovrascriverlo? y/n "
+        overwrite_confirm = "Il file che hai scelto per il log " + log_file_path + " esiste già. Vuoi sovrascriverlo?"
+
+        sg.Popup("Cancel", overwrite_confirm)
+        raise SystemExit("Cancelling: no filename supplied")
+
+        
         if input(overwrite_confirm).lower() == "y":
             log = open(log_file_path, "w")
             log.write(format_dated_list(dated_list, 120, description))
