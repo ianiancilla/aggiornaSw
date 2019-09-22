@@ -68,7 +68,7 @@ def main(event, values):
             elif values["action"] == "Trova e sostituisci":
                 file_path_list = find_file(values["file-old"], values["folder-to-search"])
                 dated_list = add_dates(file_path_list)
-                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nverrebbero sostituite con il file\n" + values["file-new"] + ":\n"
+                description = "\n\nANTERPIMA\n\n\nLe seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nverrebbero sostituite con il file\n" + values["file-new"] + ":\n"
                 print(format_dated_list(dated_list, print_width, description))
 
                 # in case a log is requested
@@ -81,7 +81,7 @@ def main(event, values):
 
                 file_path_list = find_file(values["file-old"], values["folder-to-search"])
                 dated_list = add_dates(file_path_list)
-                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nverrebbero sostituite con il file\n" + values["file-new"] + "\ne il folder per l'update verrebbe creato al path\n" + values["folder-update"] + ":\n"
+                description = "\n\nANTERPIMA\n\n\nLe seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nverrebbero sostituite con il file\n" + values["file-new"] + "\ne il folder per l'update verrebbe creato al path\n" + values["folder-update"] + ":\n"
                 print(format_dated_list(dated_list, print_width, description))
 
                 # in case a log is requested
@@ -90,9 +90,8 @@ def main(event, values):
                     save_log(log_file_path, dated_list, description)
 
             #what to do if required data was not given
-        except NameError as problema:
-            nonValid()
-            #print(problema)
+        except NameError as error:
+            nonValid(error)
 
     elif event == "ESEGUI":
         try:
@@ -108,7 +107,7 @@ def main(event, values):
                     log_file_path = os.path.join( values["folder-log"], "log-trova.txt")
                     save_log(log_file_path, dated_list, description)
 
-            # if user asked a preview of a file replacement
+            # if user asked for file replacement
             elif values["action"] == "Trova e sostituisci":
                 file_path_list = find_file(values["file-old"], values["folder-to-search"])
                 
@@ -118,7 +117,7 @@ def main(event, values):
 
                 replaced_list = replace_file(file_path_list, values["file-new"])
                 dated_list = add_dates(replaced_list)
-                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nsono state sostituite con il file\n" + values["file-new"] + ":\n"
+                description = "\n\nESEGUITO\n\n\nLe seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nsono state sostituite con il file\n" + values["file-new"] + ":\n"
                 print(format_dated_list(dated_list, print_width, description))
 
                 # in case a log is requested
@@ -127,7 +126,7 @@ def main(event, values):
                     save_log(log_file_path, dated_list, description)
 
             # if user asked for file replacement and creation of update folder:
-            elif values[action] == "Trova, Sostituisci, e crea folder Update":
+            elif values["action"] == "Trova, Sostituisci, e crea folder Update":
                 file_path_list = find_file(values["file-old"], values["folder-to-search"])
                 
                 # user confirmation before modifying files
@@ -136,7 +135,7 @@ def main(event, values):
 
                 replaced_list = replace_file(file_path_list, values["file-new"])
                 dated_list = add_dates(replaced_list)
-                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nsono state sostituite con il file\n" + values["file-new"] + "\ne il folder per l'update verrà creato al path\n" + values["folder-update"] + ":\n"
+                description = "\n\nESEGUITO\n\n\nLe seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nsono state sostituite con il file\n" + values["file-new"] + "\ne il folder per l'update verrà creato al path\n" + values["folder-update"] + ":\n"
                 print(format_dated_list(dated_list, print_width, description))
 
                 # in case a log is requested > logs the replacement
@@ -146,7 +145,7 @@ def main(event, values):
 
                 update_result = makeUpdate(replaced_list, values["folder-to-search"], values["folder-update"])
                 dated_update_list = add_dates(update_result[1])
-                description_update = "Sono stati generati i seguenti file e cartelle:\n"
+                description_update = "\n\nESEGUITO\n\n\nSono stati generati i seguenti file e cartelle:\n"
                 print(format_dated_list(dated_update_list, print_width, description_update))
 
                 # in case a log is requested
@@ -156,9 +155,8 @@ def main(event, values):
                 
             
             #what to do if required data was not given
-        except NameError as problema:
-            nonValid()
-            #print(problema)
+        except NameError as error:
+            nonValid(error)
 
 
 
@@ -214,7 +212,7 @@ def replace_file(file_path_list, new_file_path):	#list of strings (file paths), 
 
     return replacement_list
 
-def nonValid(): # >> string
+def nonValid(error): # >> string
     """
     warns the user that data that has been input is somehow invalid
     """
@@ -225,6 +223,7 @@ def nonValid(): # >> string
     **************\n
     """
     print(warning)
+    print(error)
 
 def parse_time(date_epoch):	#number (date in seconds from epoch) >> string (date in local time)
     """
@@ -282,13 +281,15 @@ def makeUpdate (file_path_list, origin_dir_path, new_dir_path):	#list of str, st
     origin_dir_path: directory da cui effettuare la copia
     new_dir_path: directory in cui effettuare la copia
     """
+    #creats empty list to store new paths
     copied_path_list = []
+    #walks the list of files to recreate
     for file_path in file_path_list:
-        abs_dir_path = os.path.dirname(file_path)
-        rel_dir_path = os.path.relpath(abs_dir_path, origin_dir_path)
-        new_dir_path = os.path.join(new_dir_path,"update", rel_dir_path)
-        os.makedirs(new_dir_path, exist_ok=True)
-        copied_path_list.append(shutil.copy(file_path, new_dir_path))
+        rel_file_path = os.path.relpath(file_path, origin_dir_path) #returns the relative path of file, only from the start directory
+        new_file_path = os.path.join(new_dir_path,"update", rel_file_path) #generates new absolute path, with new update directory
+        new_file_split = os.path.split(new_file_path) #gets only directory of new file path
+        os.makedirs(new_file_split[0], exist_ok=True) #creates directory if it does not exist already
+        copied_path_list.append(shutil.copy(file_path, new_file_path)) #copies file and adds it to list
     return (new_dir_path, copied_path_list)
 
 def user_confirm():
