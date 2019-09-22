@@ -47,15 +47,55 @@ def main(event, values):
     the main loop of the program, calling all other functions
     event, values as given by PySimpleGUI
     """
-    log_width = 100
     print_width = 70
 
     # if user only wants a preview
     if event == "ANTEPRIMA":
         try:
-            #print("Event è: ", event)
-            #print("Values è: ", values)
+            # if user only wants to find files
+            if values["action"] == "Trova e basta":
+                file_path_list = find_file(values["file-old"], values["folder-to-search"])
+                dated_list = add_dates(file_path_list)
+                description = "Ho trovato le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + ":\n"
+                print(format_dated_list(dated_list, print_width, description))
+                
+                # in case a log is requested
+                if values["folder-log"]:
+                    log_file_path = os.path.join( values["folder-log"], "log-trova.txt")
+                    save_log(log_file_path, dated_list, description)
 
+            # if user asked a preview of a file replacement    
+            elif values["action"] == "Trova e sostituisci":
+                file_path_list = find_file(values["file-old"], values["folder-to-search"])
+                dated_list = add_dates(file_path_list)
+                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nverrebbero sostituite con il file\n" + values["file-new"] + ":\n"
+                print(format_dated_list(dated_list, print_width, description))
+
+                # in case a log is requested
+                if values["folder-log"]:
+                    log_file_path = os.path.join( values["folder-log"], "log-sostituisci-anteprima.txt")
+                    save_log(log_file_path, dated_list, description)
+
+            #if user asked a preview of file replacement and update folder creation:
+            elif values["action"] == "Trova, Sostituisci, e crea folder Update":
+
+                file_path_list = find_file(values["file-old"], values["folder-to-search"])
+                dated_list = add_dates(file_path_list)
+                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nverrebbero sostituite con il file\n" + values["file-new"] + "\ne il folder per l'update verrebbe creato al path\n" + values["folder-update"] + ":\n"
+                print(format_dated_list(dated_list, print_width, description))
+
+                # in case a log is requested
+                if values["folder-log"]:
+                    log_file_path = os.path.join( values["folder-log"], "log-sostituisci-update-anteprima.txt")
+                    save_log(log_file_path, dated_list, description)
+
+            #what to do if required data was not given
+        except NameError as problema:
+            nonValid()
+            #print(problema)
+
+    elif event == "ESEGUI":
+        try:
             # if user only wants to find files
             if values["action"] == "Trova e basta":
                 file_path_list = find_file(values["file-old"], values["folder-to-search"])
@@ -68,38 +108,57 @@ def main(event, values):
                     log_file_path = os.path.join( values["folder-log"], "log-trova.txt")
                     save_log(log_file_path, dated_list, description)
 
-            # if user asked a preview of a file replacement    
+            # if user asked a preview of a file replacement
             elif values["action"] == "Trova e sostituisci":
                 file_path_list = find_file(values["file-old"], values["folder-to-search"])
-                dated_list = add_dates(file_path_list)
-                description = "Le seguenti istanze del file " + values["file-old"] + " nella cartella " +  values["folder-to-search"] + " verrebbero sostituite con il file " + values["file-new"] + ":\n"
+                
+                # user confirmation before modifying files
+                if user_confirm() == "No":
+                    return
+
+                replaced_list = replace_file(file_path_list, values["file-new"])
+                dated_list = add_dates(replaced_list)
+                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nsono state sostituite con il file\n" + values["file-new"] + ":\n"
                 print(format_dated_list(dated_list, print_width, description))
 
+                # in case a log is requested
+                if values["folder-log"]:
+                    log_file_path = os.path.join( values["folder-log"], "log-sostituzioni.txt")
+                    save_log(log_file_path, dated_list, description)
 
-            elif values["action"] == "Trova, Sostituisci, e crea folder Update":
-                pass
-                
-            
-            #what to do if required data was not given
-        except NameError as problema:
-            nonValid()
-            print(problema)
-
-           
-    elif event == "ESEGUI":
-        try:
-            if values[action] == "Trova e basta":
-                pass
-            elif values[action] == "Trova e sostituisci":
-                pass
+            # if user asked for file replacement and creation of update folder:
             elif values[action] == "Trova, Sostituisci, e crea folder Update":
-                pass
+                file_path_list = find_file(values["file-old"], values["folder-to-search"])
+                
+                # user confirmation before modifying files
+                if user_confirm() == "No":
+                    return
+
+                replaced_list = replace_file(file_path_list, values["file-new"])
+                dated_list = add_dates(replaced_list)
+                description = "Le seguenti istanze del file\n" + values["file-old"] + "\nnella cartella\n" +  values["folder-to-search"] + "\nsono state sostituite con il file\n" + values["file-new"] + "\ne il folder per l'update verrà creato al path\n" + values["folder-update"] + ":\n"
+                print(format_dated_list(dated_list, print_width, description))
+
+                # in case a log is requested > logs the replacement
+                if values["folder-log"]:
+                    log_file_path = os.path.join( values["folder-log"], "log-sostituzioni-update.txt")
+                    save_log(log_file_path, dated_list, description)
+
+                update_result = makeUpdate(replaced_list, values["folder-to-search"], values["folder-update"])
+                dated_update_list = add_dates(update_result[1])
+                description_update = "Sono stati generati i seguenti file e cartelle:\n"
+                print(format_dated_list(dated_update_list, print_width, description_update))
+
+                # in case a log is requested
+                if values["folder-log"]:
+                    log_file_path = os.path.join( update_result[0], "log-update.txt")
+                    save_log(log_file_path, dated_update_list, description_update)
                 
             
             #what to do if required data was not given
         except NameError as problema:
             nonValid()
-            print(problema)
+            #print(problema)
 
 
 
@@ -198,25 +257,21 @@ def format_dated_list(dated_list, char_number, description):	#list of tuple, int
     return formatted_string
 
 def save_log(log_file_path, dated_list, description):
-    if os.path.isfile(log_file_path):
-        overwrite_confirm = "Il file che hai scelto per il log " + log_file_path + " esiste già. Vuoi sovrascriverlo?"
-
-        sg.Popup("Cancel", overwrite_confirm)
-        raise SystemExit("Cancelling: no filename supplied")
-
-        
-        if input(overwrite_confirm).lower() == "y":
-            log = open(log_file_path, "w")
-            log.write(format_dated_list(dated_list, 120, description))
-            log.close()
-            print("\nPuoi trovare il log qui:", log_file_path)
+    #loop to check whether log file is present, and if it is overwrite or change target file
+    while os.path.isfile(log_file_path):
+        overwrite_confirm = "Il file che hai scelto per il log:\n\n" + log_file_path + "\n\nesiste già. Vuoi sovrascriverlo?"
+        overwrite_answer = sg.popup_yes_no(overwrite_confirm)
+        # break out of loop and create log if use chooses to overwrite
+        if overwrite_answer == "Yes":
+            break
         else:
-            print("Operazione annullata.")
-    else:
-        log = open(log_file_path, "w")
-        log.write(format_dated_list(dated_list, 120, description))
-        log.close()
-        print("\nPuoi trovare il log qui:", log_file_path)
+            get_file_message = "Seleziona il file dove vuoi salvare il log."
+            log_file_path = sg.popup_get_file(get_file_message, default_path=os.path.dirname(log_file_path), default_extension="txt",)
+
+    log = open(log_file_path, "w")
+    log.write(format_dated_list(dated_list, 120, description))
+    log.close()
+    print("\nPuoi trovare il log qui:", log_file_path)
 
 def makeUpdate (file_path_list, origin_dir_path, new_dir_path):	#list of str, str, str > (str, list of str)
     """
@@ -236,6 +291,13 @@ def makeUpdate (file_path_list, origin_dir_path, new_dir_path):	#list of str, st
         copied_path_list.append(shutil.copy(file_path, new_dir_path))
     return (new_dir_path, copied_path_list)
 
+def user_confirm():
+    """
+    asks user for confirmation to proceed.
+    returns str "Yes" or "No"s
+    """
+    confirm_message = "\nLa seguente azione modifcherà file in maniera definitiva.\nSei sicura di voler continuare?\n\n"
+    return sg.popup_yes_no(confirm_message)
 
 # ---===--- Loop taking in user input and using it to call scripts --- #      
 while True:      
